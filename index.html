@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>羊奶 CRM (v4.0.0 Fast Billing & Gantt Pro)</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'M PLUS Rounded 1c', sans-serif; 
+            background-color: #f5f5f4; 
+            color: #44403c;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 99px; }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: #a8a29e; }
+
+        .btn-press:active { transform: scale(0.97); filter: brightness(0.95); }
+        
+        .kanban-col-base {
+            @apply flex-shrink-0 flex flex-col bg-stone-200/60 rounded-xl overflow-hidden border border-stone-200 max-h-full transition-all duration-300;
+        }
+        .kanban-col-base:hover { @apply bg-stone-200/80 border-stone-300; }
+
+        /* Bento UI 區塊樣式 */
+        .bento-box {
+            @apply bg-white rounded-xl border border-stone-200 p-3 shadow-sm;
+        }
+
+        .input-sidebar { 
+            @apply w-full bg-stone-50 border border-stone-200 rounded-lg px-2 py-1.5 text-xs font-bold text-stone-700 outline-none focus:bg-white focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition shadow-inner;
+            height: 32px;
+        }
+        .label-sidebar { @apply text-[10px] text-stone-400 font-extrabold mb-1.5 block uppercase tracking-wider ml-0.5; }
+
+        .input-micro { 
+            @apply w-full bg-stone-50 border border-stone-300 rounded px-1.5 py-0.5 text-[10px] font-bold text-stone-700 outline-none focus:border-emerald-500 focus:bg-white transition; 
+            height: 24px;
+        }
+
+        .dot-type { @apply w-2 h-2 rounded-full shadow-sm ring-1 ring-white; }
+        .dot-morning { @apply bg-orange-400; }
+        .dot-family { @apply bg-rose-400; }
+        .dot-group { @apply bg-violet-400; }
+
+        .ui-selector-btn {
+            @apply flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg border text-[11px] font-bold transition cursor-pointer select-none;
+        }
+        
+        .type-btn-morning { @apply border-stone-100 text-stone-500 bg-stone-50 hover:bg-orange-50; }
+        .type-btn-morning.active { @apply border-orange-400 bg-orange-100 text-orange-700 ring-1 ring-orange-400; }
+        
+        .type-btn-family { @apply border-stone-100 text-stone-500 bg-stone-50 hover:bg-rose-50; }
+        .type-btn-family.active { @apply border-rose-400 bg-rose-100 text-rose-700 ring-1 ring-rose-400; }
+        
+        .type-btn-group { @apply border-stone-100 text-stone-500 bg-stone-50 hover:bg-violet-50; }
+        .type-btn-group.active { @apply border-violet-400 bg-violet-100 text-violet-700 ring-1 ring-violet-400; }
+
+        .status-btn-base { @apply border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-300; }
+        .status-btn-base.active { @apply text-white shadow-md border-transparent transform scale-105; }
+        
+        .status-btn-save.active { @apply bg-stone-500; }
+        .status-btn-notified.active { @apply bg-amber-500; }
+        .status-btn-billed.active { @apply bg-blue-500; }
+        .status-btn-paid.active { @apply bg-emerald-500; }
+        .status-btn-stopped.active { @apply bg-stone-700; }
+        .status-btn-school.active { @apply bg-teal-500; }
+        .status-btn-everyday.active { @apply bg-indigo-500; }
+
+        /* 快捷週期按鈕 */
+        .cycle-btn {
+            @apply py-1.5 px-1 rounded bg-stone-100 text-stone-500 text-[10px] font-bold hover:bg-emerald-100 hover:text-emerald-700 transition active:scale-95 border border-stone-200 hover:border-emerald-200 text-center;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(231, 229, 228, 1);
+        }
+
+        .slide-enter-active, .slide-leave-active { transition: all 0.3s ease; }
+        .slide-enter-from, .slide-leave-to { transform: translateX(100%); opacity: 0; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease-out; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        
+        .card-status-btn {
+            @apply h-6 flex items-center justify-center text-[9px] font-bold border-t border-r border-stone-100 last:border-r-0 bg-stone-50 text-stone-400 hover:bg-stone-200 transition cursor-pointer;
+        }
+        .card-status-btn.active-btn { @apply text-white shadow-inner; }
+        .bg-active-暫存 { @apply bg-stone-400; }
+        .bg-active-已通知 { @apply bg-amber-400; }
+        .bg-active-已出帳 { @apply bg-blue-400; }
+        .bg-active-已收款 { @apply bg-emerald-400; }
+        .bg-active-停送 { @apply bg-stone-700; }
+        .bg-active-開學送 { @apply bg-teal-400; }
+        .bg-active-天天送 { @apply bg-indigo-400; }
+
+        /* --- 列印專屬排版 (6個月/A4) --- */
+        @media print {
+            @page { 
+                size: A4 landscape; 
+                margin: 10mm; /* 縮減邊距以爭取空間 */
+            }
+            body, #app, main { 
+                height: auto !important; 
+                overflow: visible !important; 
+                background: white !important; 
+                /* 強制印出背景色 */
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .flex-1 { flex: none !important; width: 100% !important; }
+            .overflow-y-auto, .overflow-hidden, .custom-scroll { 
+                overflow: visible !important; 
+                max-height: none !important; 
+            }
+            .bg-stone-100, .bg-stone-50, .bg-stone-100\/50 { 
+                background-color: white !important; 
+            }
+            /* 隱藏不需要的 UI */
+            .no-print { display: none !important; }
+            .print-border { border: 1px solid #d6d3d1 !important; }
+            /* 取消陰影確保列印乾淨 */
+            .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl { 
+                box-shadow: none !important; 
+            }
+            /* 避免單個月曆被切斷換頁 */
+            .break-inside-avoid {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col text-slate-800 bg-stone-100">
+
+    <div id="app" class="flex flex-col h-full w-full relative">
+
+        <header class="glass-panel px-4 py-2 flex justify-between items-center shrink-0 z-50 h-[56px] shadow-sm no-print">
+            <div @click="reloadPage" class="font-bold text-base text-stone-800 flex items-center gap-2 cursor-pointer select-none btn-press group">
+                <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-700 group-hover:bg-emerald-200 transition"><i class="fas fa-leaf"></i></div>
+                <div class="flex flex-col leading-none">
+                    <span class="tracking-tight text-lg font-extrabold text-stone-700">五寮尖</span>
+                    <span class="text-[9px] text-stone-400 font-mono">v4.0.0</span>
+                </div>
+            </div>
+            
+            <div v-if="currentTab === 'list'" class="hidden md:flex bg-stone-200 p-1 rounded-lg gap-1">
+                <button v-for="mode in groupModes" :key="mode.key" 
+                    @click="groupByField = mode.key"
+                    :class="['px-3 py-1 rounded text-[10px] font-bold transition flex items-center gap-1.5', groupByField === mode.key ? 'bg-white text-stone-800 shadow-sm' : 'text-stone-500 hover:text-stone-700']">
+                    <i :class="mode.icon"></i> {{ mode.label }}
+                </button>
+            </div>
+
+            <div class="flex gap-2 items-center">
+                <button @click="settingsModal.show = true" class="w-8 h-8 rounded-full hover:bg-stone-200 text-stone-600 transition flex items-center justify-center" title="設定"><i class="fas fa-cog"></i></button>
+
+                <button v-if="currentTab === 'list' || currentTab === 'gantt'" @click="switchTab(currentTab === 'list' ? 'gantt' : 'list')" class="btn-press bg-white border border-stone-300 text-stone-600 px-3 py-1.5 rounded-lg flex items-center justify-center hover:bg-stone-100 transition shadow-sm text-xs font-bold gap-1.5">
+                    <i :class="currentTab === 'list' ? 'fas fa-stream' : 'fas fa-th-large'"></i>
+                    {{ currentTab === 'list' ? '甘特圖' : '看板視圖' }}
+                </button>
+
+                <div v-if="currentTab === 'list' || currentTab === 'gantt'" class="flex bg-stone-200 rounded-lg p-0.5 ml-1">
+                    <button @click="triggerImport" class="w-8 h-8 rounded-md hover:bg-white text-stone-600 text-xs transition shadow-sm" title="匯入"><i class="fas fa-file-import"></i></button>
+                    <button @click="exportData" class="w-8 h-8 rounded-md hover:bg-white text-stone-600 text-xs transition shadow-sm" title="匯出"><i class="fas fa-file-export"></i></button>
+                    <input type="file" ref="fileInput" class="hidden" @change="handleImport" accept=".json">
+                </div>
+
+                <button v-if="currentTab === 'create' && editMode" @click="deleteOrder" :disabled="isSaving" class="btn-press bg-white text-red-600 border border-red-200 px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-red-50 transition flex items-center gap-2 disabled:opacity-50 ml-2">
+                    <i class="fas fa-trash-alt"></i> 刪除作廢
+                </button>
+
+                <button v-if="currentTab === 'create'" @click="printCalendar" class="btn-press bg-white text-blue-600 border border-blue-200 px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-blue-50 transition flex items-center gap-2">
+                    <i class="fas fa-print"></i> 列印明細
+                </button>
+
+                <button v-if="currentTab === 'create'" @click="saveOrder" :disabled="isSaving" class="btn-press bg-emerald-600 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow hover:bg-emerald-700 transition flex items-center gap-2 disabled:opacity-50">
+                    <i class="fas fa-save"></i> 儲存
+                </button>
+
+                <button v-if="currentTab === 'list' || currentTab === 'gantt'" @click="switchToCreate" class="btn-press bg-emerald-600 text-white w-9 h-9 rounded-lg flex items-center justify-center shadow hover:bg-emerald-700 transition">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button v-if="currentTab === 'create'" @click="switchTab('list')" class="btn-press bg-white border border-stone-300 text-stone-600 w-9 h-9 rounded-lg flex items-center justify-center hover:bg-stone-100 transition shadow-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-hidden relative flex flex-col bg-stone-100 print:bg-white print:overflow-visible">
+
+            <div v-if="currentTab === 'list'" class="flex-1 overflow-hidden flex flex-col no-print">
+                <div class="px-4 py-2 bg-white border-b border-stone-200 flex flex-wrap gap-3 items-center shrink-0 shadow-sm z-10">
+                    <div class="relative group w-48">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none"><i class="fas fa-search text-stone-300 text-xs group-focus-within:text-emerald-500 transition"></i></div>
+                        <input type="text" v-model="searchQuery" placeholder="搜尋 姓名 / 地區..." class="w-full pl-8 pr-3 py-1.5 bg-stone-100 border border-stone-200 rounded-full text-xs font-bold text-stone-700 outline-none focus:bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition placeholder-stone-400">
+                    </div>
+                    <div class="h-5 w-px bg-stone-200 mx-1"></div>
+                    <div class="flex flex-wrap gap-1.5 overflow-x-auto no-scrollbar pb-1 max-w-[50vw]">
+                        <label v-for="st in statusOptions" :key="st" class="cursor-pointer relative group select-none shrink-0">
+                            <input type="checkbox" :value="st" v-model="filterStatus" class="hidden peer">
+                            <span :class="['px-2.5 py-1 rounded-lg border text-[10px] font-extrabold transition flex items-center gap-1.5 shadow-sm', filterStatus.includes(st) ? (st === '停送' ? 'bg-stone-700 text-white border-stone-700' : 'bg-stone-800 text-white border-stone-800') : 'bg-white text-stone-400 border-stone-200 hover:border-stone-300']">
+                                <span :class="['w-1.5 h-1.5 rounded-full', filterStatus.includes(st) ? 'bg-white' : 'bg-stone-300']"></span>{{ st }}
+                            </span>
+                        </label>
+                    </div>
+                    <div class="ml-auto text-[10px] text-stone-400 font-mono">{{ filteredOrders.length }} cards</div>
+                </div>
+                <div v-if="loading" class="flex-1 flex items-center justify-center text-stone-400 text-sm gap-2">
+                    <i class="fas fa-circle-notch animate-spin text-emerald-500"></i> 讀取資料庫...
+                </div>
+                <div v-else class="flex-1 overflow-x-auto overflow-y-hidden custom-scroll p-4 bg-stone-100">
+                    <div class="h-full flex gap-3 min-w-max pb-2">
+                        <div v-for="(group, groupKey) in groupedOrders" :key="groupKey" :class="['kanban-col-base', getSmartColumnWidth(group.length), groupKey === '停送' ? 'opacity-70 hover:opacity-100' : '']">
+                            <div class="px-3 py-2 border-b border-stone-300/50 flex justify-between items-center bg-stone-200/50 sticky top-0 z-10 backdrop-blur-sm">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2.5 h-2.5 rounded-full shadow-sm" :class="getGroupColor(groupKey)"></div>
+                                    <span class="font-extrabold text-stone-700 text-xs truncate max-w-[120px]" :title="groupKey">{{ groupKey === 'undefined' ? '未分類' : groupKey }}</span>
+                                </div>
+                                <span class="bg-white/80 text-stone-500 px-1.5 rounded text-[9px] font-bold shadow-sm">{{ group.length }}</span>
+                            </div>
+                            <div class="overflow-y-auto custom-scroll flex-1 p-2">
+                                <div :class="['grid gap-2', getSmartGridCols(group.length)]">
+                                    <div v-for="order in group" :key="order.id" class="bg-white rounded-lg shadow-sm border border-stone-200 hover:border-emerald-400 transition group relative cursor-pointer overflow-hidden flex flex-col h-min" @click="editOrder(order)">
+                                        <div class="p-2.5 flex-1 relative">
+                                            <div class="flex justify-between items-start mb-1.5">
+                                                <div class="flex items-center gap-1.5 overflow-hidden">
+                                                    <div :class="['dot-type flex-shrink-0', getTypeDotClass(order.type)]"></div>
+                                                    <h3 class="font-extrabold text-stone-800 text-sm leading-none truncate" :class="order.status === '停送' ? 'line-through text-stone-400' : ''">{{ order.customerName }}</h3>
+                                                </div>
+                                                <span class="text-emerald-700 font-extrabold font-mono text-xs" :class="order.status === '停送' ? 'opacity-50' : ''">${{ (order.totalAmount || 0).toLocaleString() }}</span>
+                                            </div>
+                                            <div class="flex justify-between items-center mt-2">
+                                                <div class="text-[9px] text-stone-400 font-bold bg-stone-50 px-1.5 py-0.5 rounded border border-stone-100 truncate flex items-center">
+                                                    <i class="far fa-calendar-alt mr-1 text-[8px]"></i>{{ formatDateRangeShort(order.dates) }}
+                                                </div>
+                                                <span class="text-[9px] text-stone-500 font-bold bg-stone-100 px-1.5 rounded-full truncate max-w-[35%]">{{ order.area || '-' }}</span>
+                                            </div>
+                                            <button @click.stop="openHistory(order.customerName)" class="absolute top-8 right-2 opacity-0 group-hover:opacity-100 transition text-stone-300 hover:text-stone-500"><i class="fas fa-history text-xs"></i></button>
+                                        </div>
+                                        <div class="flex border-t border-stone-100 bg-stone-50/50" @click.stop>
+                                            <div v-for="st in ['暫存','已通知','已出帳','已收款']" :key="st" @click.stop="quickUpdateStatus(order, st)" :class="['flex-1 card-status-btn', order.status === st ? 'active-btn bg-active-' + st : '']" :title="st">{{ st.substring(0,2) }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'gantt'" class="flex-1 flex flex-col overflow-hidden bg-stone-100 no-print">
+                <div class="px-4 py-2 bg-white border-b border-stone-200 flex flex-wrap gap-4 items-center shrink-0 shadow-sm z-10 justify-between">
+                    <span class="text-[10px] font-bold text-stone-500"><i class="fas fa-info-circle mr-1 text-emerald-500"></i>左側可統一修改該顧客狀態，點擊虛線月份快速排單</span>
+                    <div class="flex items-center gap-2">
+                        <button @click="showGanttSetting = !showGanttSetting" class="text-[10px] font-bold px-2 py-1 rounded bg-stone-100 text-stone-600 hover:bg-stone-200 transition flex items-center gap-1"><i class="fas fa-sliders-h"></i> 區間調整</button>
+                        <div v-if="showGanttSetting" class="flex items-center gap-1 bg-stone-50 border border-stone-200 rounded px-2 py-1 shadow-inner">
+                            <input type="month" v-model="ganttRange.start" class="bg-transparent text-[10px] font-mono text-stone-700 outline-none w-20">
+                            <i class="fas fa-arrow-right text-stone-300 text-[8px]"></i>
+                            <input type="month" v-model="ganttRange.end" class="bg-transparent text-[10px] font-mono text-stone-700 outline-none w-20">
+                        </div>
+                    </div>
+                </div>
+                <div v-if="loading" class="flex-1 flex items-center justify-center text-stone-400 text-sm gap-2"><i class="fas fa-circle-notch animate-spin text-emerald-500"></i> 讀取資料庫...</div>
+                <div v-else class="flex-1 overflow-auto custom-scroll p-4">
+                    <div class="bg-white rounded-xl shadow-sm border border-stone-200 min-w-max w-full">
+                        <div class="flex border-b border-stone-200 bg-stone-50 sticky top-0 z-20 rounded-t-xl">
+                            <div class="w-32 shrink-0 p-3 font-bold text-stone-500 text-xs border-r border-stone-200 sticky left-0 bg-stone-50 z-30 shadow-[1px_0_0_0_#e7e5e4]">顧客資訊與狀態</div>
+                            <div v-for="m in ganttMonths" :key="m" class="w-20 shrink-0 p-3 font-mono font-extrabold text-stone-700 text-[10px] text-center border-r border-stone-200 last:border-0">{{ m }}</div>
+                        </div>
+                        <div v-for="row in ganttData" :key="row.customer.name" class="flex border-b border-stone-100 hover:bg-stone-50 transition group" :class="row.customer.status === '停送' ? 'opacity-60' : ''">
+                            <div class="w-32 shrink-0 p-2 flex flex-col justify-center border-r border-stone-200 sticky left-0 bg-white group-hover:bg-stone-50 z-10 shadow-[1px_0_0_0_#e7e5e4]">
+                                <span class="font-extrabold text-stone-700 text-[13px] truncate mb-1" :class="row.customer.status === '停送' ? 'line-through text-stone-400' : ''">{{ row.customer.name }}</span>
+                                <select :value="row.customer.status || '暫存'" @change="e => updateCustomerStatus(row.customer, e.target.value)" class="text-[9px] font-bold border border-stone-200 rounded px-1 py-0.5 bg-stone-50 text-stone-500 outline-none w-full cursor-pointer hover:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition">
+                                    <option v-for="st in statusOptions" :key="st" :value="st">{{ st }}</option>
+                                </select>
+                            </div>
+                            <div v-for="m in ganttMonths" :key="m" class="w-20 shrink-0 border-r border-stone-100 last:border-0 p-1 flex items-center justify-center relative">
+                                <div v-if="row.months[m]" @click="editOrder(row.months[m])" :class="['w-full h-full min-h-[36px] rounded cursor-pointer flex flex-col items-center justify-center text-white shadow-sm transition hover:scale-105', getStatusColorBg(row.months[m].status)]">
+                                    <span class="text-[9px] font-bold">{{ row.months[m].status }}</span>
+                                </div>
+                                <div v-else @click="createDefaultGanttBill(row.customer, m)" class="w-full h-full min-h-[36px] rounded border border-dashed border-stone-300 bg-stone-50/50 text-stone-400 flex items-center justify-center cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 hover:text-emerald-600 transition group/cell">
+                                    <i class="fas fa-plus text-[8px] opacity-0 group-hover/cell:opacity-100 transition"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'create'" class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-stone-50 relative print:bg-white print:overflow-visible">
+                
+                <button @click="isSidebarOpen = !isSidebarOpen" 
+                    class="absolute top-2 left-2 z-30 w-6 h-6 bg-white border border-stone-300 rounded-md flex items-center justify-center text-stone-500 shadow-sm hover:bg-stone-50 transition lg:hidden no-print">
+                    <i :class="isSidebarOpen ? 'fas fa-chevron-left' : 'fas fa-chevron-right'"></i>
+                </button>
+
+                <div :class="['bg-stone-100 border-r border-stone-200 h-full flex flex-col z-20 shadow-xl overflow-hidden transition-all duration-300 ease-in-out absolute lg:relative print:hidden no-print', isSidebarOpen ? 'w-[320px] translate-x-0' : 'w-0 -translate-x-full lg:w-[320px] lg:translate-x-0 opacity-0 lg:opacity-100']">
+                    <div class="p-3 border-b border-stone-200 bg-white flex justify-between items-center shrink-0 shadow-sm z-10">
+                        <span class="text-[11px] font-extrabold text-stone-600 uppercase tracking-widest flex items-center gap-1.5"><i class="fas fa-cube text-emerald-500"></i>訂單配置</span>
+                        <button @click="isSidebarOpen = false" class="lg:hidden text-stone-400 hover:text-stone-600"><i class="fas fa-times"></i></button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3 min-w-[320px] bg-stone-100">
+                        <div class="bento-box space-y-3">
+                            <div>
+                                <label class="label-sidebar ">顧客姓名</label>
+                                <input type="text" v-model="form.customerName" @input="onNameInput" list="customer-list" class="input-sidebar w-full pl-8 pr-3 py-1.5 bg-stone-200 border border-stone-900 rounded-full text-xs font-bold text-stone-700 outline-none focus:bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition placeholder-stone-400" placeholder="輸入姓名...">
+                                <datalist id="customer-list"><option v-for="c in savedCustomers" :value="c.name"></option></datalist>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="label-sidebar">地區 (Area)</label>
+                                    <input type="text" v-model="form.area" list="area-options" class="input-sidebar w-full pl-8 pr-3 py-1.5 bg-stone-200 border border-stone-900 rounded-full text-xs font-bold text-stone-700 outline-none focus:bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition placeholder-stone-400">
+                                    <datalist id="area-options"><option v-for="a in uniqueAreas" :value="a"></option></datalist>
+                                </div>
+                                <div>
+                                    <label class="label-sidebar">單價 (Price)</label>
+                                    <input type="number" v-model.number="form.unitPrice" class="input-sidebar text-emerald-800 font-mono w-full pl-8 pr-3 py-1.5 bg-stone-200 border border-stone-900 rounded-full text-xs font-bold text-stone-700 outline-none focus:bg-white focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 transition placeholder-stone-400">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bento-box space-y-4">
+                            <div>
+                                <label class="label-sidebar">產品類型</label>
+                                <div class="grid grid-cols-3 gap-1.5 ">
+                                    <div @click="form.type = '晨間'" :class="['ui-selector-btn type-btn-morning', form.type === '晨間' ? 'active' : '']">
+                                        <div class="dot-type dot-morning "></div>晨間
+                                    </div>
+                                    <div @click="form.type = '家庭號'" :class="['ui-selector-btn type-btn-family', form.type === '家庭號' ? 'active' : '']">
+                                        <div class="dot-type dot-family"></div>家庭
+                                    </div>
+                                    <div @click="form.type = '團購'" :class="['ui-selector-btn type-btn-group', form.type === '團購' ? 'active' : '']">
+                                        <div class="dot-type dot-group "></div>團購
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-stone-100 pt-3">
+                                <div class="flex justify-between items-end mb-1.5">
+                                    <label class="label-sidebar !mb-0">快捷週期 (Quick Cycle)</label>
+                                </div>
+                                <div class="grid grid-cols-3 gap-1.5">  
+                                    <button @click="applyQuickCycle([1,2,3,4,5])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded ">平日 (一~五)</button>
+                                    <button @click="applyQuickCycle([1,2,3,4,5,6])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">一至六</button>
+                                    <button @click="applyQuickCycle([1,3,5])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">一三五</button>
+                                    <button @click="applyQuickCycle([2,4,6])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">二四六</button>
+                                    <button @click="applyQuickCycle([2,4])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">二四</button>
+                                    <button @click="applyQuickCycle([2,3,4,5,6,0])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">二至日</button>
+                                    <button @click="applyQuickCycle([1])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">每週一</button>
+                                    <button @click="applyQuickCycle([0])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">每週日</button>
+                                    <button @click="applyQuickCycle([2])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">每週二</button>
+                                    <button @click="applyQuickCycle([1,4])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">週一＆週四</button>
+                                    <button @click="applyQuickCycle([0,1,2,3,4,5,6])" class="bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">天天送</button> 
+                                </div>
+                                <p class="text-[8px] text-stone-400 mt-1.5 font-bold"><i class="fas fa-magic text-emerald-400 mr-1"></i>點擊自動套用並計算右側日曆</p>
+                            </div>
+                        </div>
+
+                        <div class="bento-box space-y-2">
+                            <label class="label-sidebar">帳單狀態 (Status)</label>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <div v-for="s in statusOptions" :key="s" 
+                                     @click="form.status = s"
+                                     :class="['ui-selector-btn status-btn-base', 
+                                              form.status === s ? getStatusBtnClass(s) + ' active' : '',
+                                              s === '停送' ? 'col-span-3 mt-1 !border-stone-200' : '']">
+                                    <i v-if="s === '停送'" class="fas fa-ban mr-1 opacity-50"></i>{{ s }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <label class="flex items-center gap-2 cursor-pointer p-2 rounded-lg border border-transparent hover:bg-stone-200 transition group ml-1">
+                            <input type="checkbox" v-model="form.ignoreHolidays" class="text-emerald-600 rounded focus:ring-0 w-3.5 h-3.5 border-stone-300">
+                            <span class="text-[10px] font-bold text-stone-500 group-hover:text-stone-700">強制排單 (無視國定假日)</span>
+                        </label>
+
+                    </div>
+                </div>
+
+                <div class="flex-1 flex flex-col h-full overflow-hidden w-full lg:w-auto print:overflow-visible">
+                    
+                    <div class="bg-white border-b border-stone-200 p-2 flex flex-wrap gap-2 justify-between items-center shadow-sm z-10 pl-10 lg:pl-2 no-print">
+                        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pr-2">
+                            <label v-for="d in [1,2,3,4,5,6,0]" :key="d" :class="['w-7 h-7 shrink-0 rounded-md flex items-center justify-center text-[11px] font-extrabold cursor-pointer transition select-none border', form.selectedDays.includes(d) ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-stone-50 text-stone-400 border-stone-200 hover:border-stone-300']">
+                                <input type="checkbox" :value="d" v-model="form.selectedDays" class="hidden" @change="generateDates">
+                                {{ dayMap[d] }}
+                            </label>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1.5 bg-stone-50 p-1 rounded-lg border border-stone-200 transition-all" :class="isCustomQtyMode ? 'border-emerald-400 ring-1 ring-emerald-100' : ''">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="checkbox" v-model="isCustomQtyMode" @change="generateDates" class="text-emerald-600 rounded w-3 h-3 border-stone-300 focus:ring-0">
+                                    <span class="text-[10px] font-bold" :class="isCustomQtyMode ? 'text-emerald-700' : 'text-stone-500'">特規數量:</span>
+                                </label>
+                                <input type="number" v-model.number="customQtyValue" @change="generateDates" :disabled="!isCustomQtyMode" min="2" class="input-micro w-10 text-center font-mono disabled:opacity-50 disabled:bg-stone-100">
+                            </div>
+
+                            <div class="h-4 w-px bg-stone-300 mx-0.5"></div>
+
+                            <div class="flex items-center gap-1.5 bg-stone-50 p-1 rounded-lg border border-stone-200">
+                                <input type="month" v-model="dateRange.start" @change="generateDates" class="input-micro w-24 text-center font-mono">
+                                <i class="fas fa-arrow-right text-stone-300 text-[10px]"></i>
+                                <input type="month" v-model="dateRange.end" @change="generateDates" class="input-micro w-24 text-center font-mono">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-1 overflow-hidden print:overflow-visible">
+                        <div class="flex-1 overflow-y-auto custom-scroll p-4 bg-stone-100/50 print:bg-white print:overflow-visible">
+                            
+                            <div class="hidden print:flex justify-between items-end mb-3 border-b-2 border-stone-800 pb-1 w-full shrink-0">
+                                <div>
+                                    <h1 class="text-xl font-black text-stone-800 tracking-tight">{{ form.customerName || '未命名顧客' }} <span class="text-base font-bold text-stone-500 ml-2">配送明細與日曆</span></h1>
+                                    <p class="text-xs font-bold text-stone-500 mt-1">地區: {{ form.area || '未分區' }} | 產品類型: {{ form.type }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[10px] font-bold text-stone-500 uppercase mb-0.5">總金額</p>
+                                    <p class="text-2xl font-black text-stone-800 font-mono tracking-tight">${{ totalAmount.toLocaleString() }} <span class="text-sm text-stone-500 font-bold ml-1">/ 共 {{ totalCount }} 瓶</span></p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-5 print:grid-cols-4 print:gap-2">
+                                <div v-for="(monthData, mIndex) in monthsGrid" :key="mIndex" class="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition print-border break-inside-avoid">
+                                    
+                                    <div class="bg-stone-50 px-4 py-2 print:px-2 print:py-1 border-b border-stone-100 flex justify-between items-center cursor-pointer hover:bg-stone-100" @click="toggleMonth(monthData.days)">
+                                        <span class="font-bold text-stone-700 font-mono text-sm print:text-xs tracking-wider flex items-center gap-2">
+                                            {{ monthData.title }}
+                                        </span>
+                                        <div class="flex items-center gap-2" v-if="monthData.total > 0">
+                                            <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-extrabold shadow-sm no-print">
+                                                {{ monthData.total }}瓶 / ${{ monthData.amount }}
+                                            </span>
+                                            <span class="hidden print:inline-block text-[10px] font-bold text-stone-700">
+                                                本月: {{ monthData.total }}瓶 (${{ monthData.amount }})
+                                            </span>
+                                            <button @click.stop="quickBillMonth(monthData)" class="bg-blue-500 hover:bg-blue-600 text-white text-[9px] px-2 py-0.5 rounded shadow flex items-center gap-1 transition transform active:scale-95 no-print">
+                                                <i class="fas fa-file-invoice-dollar"></i>一鍵出帳
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-3 print:p-1.5">
+                                        <div class="grid grid-cols-7 mb-1.5 print:mb-0.5 text-center">
+                                            <span class="text-[9px] text-stone-400 font-extrabold" v-for="w in ['一','二','三','四','五','六','日']" :key="w">{{w}}</span>
+                                        </div>
+                                        <div class="grid grid-cols-7 gap-1.5 print:gap-0.5">
+                                            <div v-for="n in monthData.startDay" :key="'pad-'+n"></div>
+                                            <div v-for="d in monthData.days" :key="d.fullDate" 
+                                                @click="d.isValid ? toggleDateQty(d) : null" 
+                                                :class="['aspect-square rounded-lg flex flex-col items-center justify-center relative transition-all duration-75 border',
+                                                         d.isValid 
+                                                            ? (d.qty > 0 ? 'bg-emerald-500 border-emerald-600 shadow cursor-pointer z-10 scale-105 print-border print:bg-stone-200 print:text-black print:shadow-none print:scale-100' : 'bg-white border-stone-200 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50 print-border')
+                                                            : 'bg-stone-50 border-transparent opacity-40 cursor-default print:border-none'
+                                                ]">
+                                                <div v-if="d.isSpecial" class="absolute top-1 right-1 w-1.5 h-1.5 bg-purple-400 rounded-full z-20 no-print"></div>
+                                                <span :class="['text-[11px] font-extrabold leading-none print:text-stone-800 print:text-[10px]', d.qty > 0 ? 'text-white' : 'text-stone-600']">{{ d.dateStr }}</span>
+                                                <div v-if="d.qty > 0" class="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-white text-emerald-700 rounded-full flex items-center justify-center text-[9px] font-black shadow-md border border-emerald-100 print:relative print:-bottom-0 print:-right-0 print:border-none print:shadow-none print:text-stone-800 print:bg-transparent print:mt-0 print:text-[9px]">{{ d.qty }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-[280px] bg-white border-l border-stone-200 flex flex-col shadow-2xl z-20 hidden md:flex print:hidden no-print">
+                            <div class="p-3 bg-stone-800 flex justify-between items-center">
+                                <span class="text-xs font-bold text-white tracking-widest">BILLING</span>
+                                <div class="flex bg-stone-700 rounded p-0.5 shadow-inner gap-0.5">
+                                    <button @click="copyMode='A'" :class="['text-[10px] px-2.5 py-0.5 rounded transition', copyMode==='A'?'bg-emerald-500 text-white font-bold shadow':'text-stone-300 hover:text-white']">明細</button>
+                                    <button @click="copyMode='B'" :class="['text-[10px] px-2.5 py-0.5 rounded transition', copyMode==='B'?'bg-emerald-500 text-white font-bold shadow':'text-stone-300 hover:text-white']">月結</button>
+                                </div>
+                            </div>
+                            <div class="flex-1 relative bg-stone-50">
+                                <textarea readonly v-model="generatedBillText" class="w-full h-full text-[11px] font-mono bg-transparent p-4 text-stone-700 outline-none resize-none leading-relaxed border-none"></textarea>
+                                <button @click="copyBill" class="absolute bottom-4 right-4 bg-emerald-600 text-white w-10 h-10 rounded-full shadow-lg hover:bg-emerald-700 flex items-center justify-center transition transform hover:scale-105 active:scale-95" title="複製帳單">
+                                    <i class="far fa-copy text-sm"></i>
+                                </button>
+                            </div>
+                            <div class="p-4 bg-white border-t border-stone-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                                <div class="flex justify-between items-end">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] text-stone-400 font-extrabold uppercase mb-0.5">Total Amount</span>
+                                        <span class="text-[10px] font-bold text-stone-500">{{ totalCount }} 瓶</span>
+                                    </div>
+                                    <span class="text-2xl font-black text-emerald-700 font-mono tracking-tight">${{ totalAmount.toLocaleString() }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <transition name="fade">
+            <div v-if="historyModal.show" class="fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/50 backdrop-blur-sm p-4 md:p-10 no-print" @click.self="historyModal.show = false">
+                <div class="bg-white w-full max-w-5xl h-full max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row border border-white/60">
+                    <div class="w-full md:w-1/2 bg-stone-50 flex flex-col border-r border-stone-200">
+                        <div class="p-4 border-b border-stone-200 flex justify-between items-center bg-white">
+                            <div><h3 class="font-bold text-lg text-stone-800">{{ historyModal.customerName }} <span class="text-xs text-stone-400 font-normal">歷史紀錄</span></h3></div>
+                            <button @click="historyModal.show = false" class="w-8 h-8 rounded-full bg-stone-100 text-stone-500 hover:bg-stone-200 flex items-center justify-center"><i class="fas fa-times"></i></button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3">
+                            <div v-for="ord in historyModal.orders" :key="ord.id" 
+                                :class="['bg-white border rounded-xl p-3 cursor-pointer transition flex items-center gap-3 relative overflow-hidden', historyModal.selectedIds.includes(ord.id) ? 'border-emerald-500 ring-1 ring-emerald-500 shadow-md' : 'border-stone-200 hover:border-emerald-300']"
+                                @click="toggleHistorySelection(ord)">
+                                <div :class="['w-1 h-full absolute left-0 top-0', getStatusColorBg(ord.status)]"></div>
+                                <div class="flex items-center justify-center w-5 h-5 rounded border border-stone-300 text-white" :class="historyModal.selectedIds.includes(ord.id) ? 'bg-emerald-500 border-emerald-500' : 'bg-white'"><i class="fas fa-check text-[10px]" v-show="historyModal.selectedIds.includes(ord.id)"></i></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[10px] bg-stone-100 text-stone-500 px-1.5 rounded font-bold">{{ formatDateRangeShort(ord.dates) }}</span>
+                                        <span class="text-emerald-700 font-bold font-mono text-sm">${{ ord.totalAmount }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-end">
+                                        <span class="text-[10px] text-stone-400">{{ ord.totalCount }} 瓶 @ {{ ord.unitPrice }}</span>
+                                        <span class="text-[9px] px-1.5 py-0.5 rounded border text-stone-500 bg-stone-50">{{ ord.status }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-1/2 bg-white flex flex-col relative">
+                        <div class="p-3 border-b border-stone-100 flex justify-between items-center">
+                            <span class="font-bold text-stone-700 text-sm">合併預覽</span>
+                            <button v-if="historyModal.selectedIds.length > 0" @click="copyCombinedBill" class="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold shadow hover:bg-emerald-700 transition"><i class="far fa-copy mr-1"></i>複製</button>
+                        </div>
+                        <textarea readonly :value="combinedBillText" class="flex-1 w-full p-6 text-xs font-mono text-stone-700 outline-none resize-none leading-relaxed"></textarea>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
+            <div v-if="settingsModal.show" class="fixed inset-0 z-[70] flex items-center justify-center bg-stone-900/60 backdrop-blur-sm p-6 no-print" @click.self="settingsModal.show = false">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col h-[70vh] border border-white/50">
+                    <div class="p-4 border-b border-stone-200 bg-stone-50 flex justify-between items-center">
+                        <h3 class="font-bold text-stone-800 text-sm">營運設定</h3>
+                        <button @click="settingsModal.show = false" class="text-stone-400 hover:text-stone-600"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="p-4 flex-1 overflow-y-auto custom-scroll space-y-3">
+                        <div class="flex gap-2">
+                            <input type="date" v-model="newHoliday.date" class="w-full bg-white border border-stone-300 rounded px-2 py-1 text-xs outline-none">
+                            <input type="text" v-model="newHoliday.reason" placeholder="原因" class="w-full bg-white border border-stone-300 rounded px-2 py-1 text-xs outline-none">
+                            <button @click="addHoliday" class="bg-emerald-600 text-white rounded px-3 text-xs font-bold shadow hover:bg-emerald-700"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div class="space-y-2 mt-4">
+                             <div v-for="(reason, date) in specialDays" :key="date" class="flex justify-between items-center bg-stone-50 p-2 rounded border border-stone-200">
+                                <div><div class="text-[11px] font-bold text-stone-700">{{ date }}</div><div class="text-[10px] text-purple-600 font-bold">{{ reason }}</div></div>
+                                <button @click="removeHoliday(date)" class="text-stone-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
+            <div v-if="modal.show" class="fixed inset-0 z-[80] flex items-center justify-center bg-stone-900/40 backdrop-blur-sm p-6 no-print" @click.self="closeModal">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center border border-white/50">
+                    <div :class="['w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 text-lg shadow-sm', modal.type==='error'?'bg-red-50 text-red-500':'bg-emerald-50 text-emerald-500']">
+                        <i :class="modal.type==='error'?'fas fa-exclamation':'fas fa-check'"></i>
+                    </div>
+                    <h3 class="font-bold text-base mb-1 text-stone-800 whitespace-pre-line">{{ modal.title }}</h3>
+                    <p class="text-xs text-stone-600 mb-5 break-all leading-relaxed whitespace-pre-line">{{ modal.message }}</p>
+                    <button @click="closeModal" class="w-full bg-stone-800 text-white py-2 rounded-xl font-bold hover:bg-stone-900 transition text-xs shadow-lg">確定</button>
+                </div>
+            </div>
+        </transition>
+
+    </div>
+
+    <script type="module">
+        import { createApp, ref, computed, reactive, onMounted, watch } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref as dbRef, push, onValue, remove, update, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6D9vh6J2mdnjz2VXEVe99oi7oLF-irFo",
+            authDomain: "crm-ts-1225-001.firebaseapp.com",
+            databaseURL: "https://crm-ts-1225-001-default-rtdb.firebaseio.com",
+            projectId: "crm-ts-1225-001",
+            storageBucket: "crm-ts-1225-001.firebasestorage.app",
+            messagingSenderId: "925760221722",
+            appId: "1:925760221722:web:1aeda0b82f1f16b8dcd7a3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        createApp({
+            setup() {
+                const currentTab = ref('list');
+                const loading = ref(true);
+                const isSaving = ref(false);
+                const editMode = ref(false);
+                const currentOrderId = ref(null);
+                const searchQuery = ref('');
+                const isSidebarOpen = ref(true);
+
+                const isCustomQtyMode = ref(false);
+                const customQtyValue = ref(2);
+
+                const modal = reactive({ show: false, title: '', message: '', type: 'info' });
+                const settingsModal = reactive({ show: false });
+                const historyModal = reactive({ show: false, customerName: '', orders: [], selectedIds: [] });
+
+                const orders = ref([]);
+                const savedCustomers = ref([]);
+                const specialDays = ref({});
+                const newHoliday = reactive({ date: '', reason: '' });
+                const fileInput = ref(null);
+
+                const statusOptions = ['暫存', '已通知', '已出帳', '已收款', '停送', '開學送', '天天送'];
+                const filterStatus = ref(['暫存', '已通知', '已出帳', '已收款', '開學送', '天天送']); 
+                
+                const groupByField = ref('status');
+                const groupModes = [
+                    { key: 'status', label: '狀態', icon: 'fas fa-tasks' },
+                    { key: 'area', label: '地區', icon: 'fas fa-map-marked-alt' },
+                    { key: 'type', label: '類型', icon: 'fas fa-tags' }
+                ];
+
+                const dateRange = reactive({ start: '', end: '' });
+                const form = reactive({ 
+                    customerName: '', area: '', unitPrice: 30, 
+                    status: '暫存', type: '晨間', selectedDays: [1,2,3,4,5],
+                    ignoreHolidays: false 
+                });
+                const quantityMap = reactive(new Map());
+                const dayMap = { 1: '一', 2: '二', 3: '三', 4: '四', 5: '五', 6: '六', 0: '日' };
+                const copyMode = ref('A');
+
+                const showGanttSetting = ref(false);
+                const initGanttRange = () => {
+                    const d = new Date();
+                    const dStart = new Date(d.getFullYear(), d.getMonth() - 3, 1);
+                    const dEnd = new Date(d.getFullYear(), d.getMonth() + 2, 1);
+                    return {
+                        start: `${dStart.getFullYear()}-${String(dStart.getMonth()+1).padStart(2, '0')}`,
+                        end: `${dEnd.getFullYear()}-${String(dEnd.getMonth()+1).padStart(2, '0')}`
+                    };
+                };
+                const ganttRange = reactive(initGanttRange());
+
+                const showModal = (t, m, type='success') => { modal.title = t; modal.message = m; modal.type = type; modal.show = true; };
+                const closeModal = () => modal.show = false;
+                const reloadPage = () => window.location.reload();
+
+                const printCalendar = () => { window.print(); };
+
+                const deleteOrder = async () => {
+                    if (!currentOrderId.value) return;
+                    if (confirm(`確定要作廢並刪除此訂單嗎？\n顧客：${form.customerName}`)) {
+                        isSaving.value = true;
+                        try {
+                            await remove(dbRef(db, `orders/${currentOrderId.value}`));
+                            showModal('刪除成功', '訂單已從系統中移除並作廢');
+                            switchTab('list');
+                        } catch(e) {
+                            showModal('刪除失敗', e.message, 'error');
+                        } finally {
+                            isSaving.value = false;
+                        }
+                    }
+                };
+
+                const exportData = () => {
+                    const dataStr = JSON.stringify(orders.value, null, 2);
+                    const blob = new Blob([dataStr], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = `crm_backup_${new Date().toISOString().split('T')[0]}.json`; a.click();
+                };
+                const triggerImport = () => fileInput.value.click();
+                const handleImport = (e) => {
+                    const file = e.target.files[0]; if(!file) return;
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if(Array.isArray(data) && confirm(`確認匯入 ${data.length} 筆資料？`)) {
+                                for(const item of data) { const { id, ...c } = item; await push(dbRef(db, 'orders'), c); }
+                                showModal('匯入成功', `成功載入 ${data.length} 筆`);
+                            }
+                        } catch(err) { showModal('匯入失敗', err.message, 'error'); }
+                    };
+                    reader.readAsText(file);
+                };
+
+                onMounted(() => {
+                    const today = new Date();
+                    dateRange.start = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+                    dateRange.end = dateRange.start;
+
+                    onValue(dbRef(db, 'orders'), (s) => { 
+                        const d = s.val(); 
+                        orders.value = d ? Object.entries(d).map(([k, v]) => ({ id: k, ...v })) : []; 
+                        loading.value = false; 
+                    });
+                    onValue(dbRef(db, 'customers'), (s) => { savedCustomers.value = s.val() ? Object.values(s.val()) : []; });
+                    onValue(dbRef(db, 'settings/holidays'), (s) => { specialDays.value = s.val() || {}; });
+                });
+
+                const filteredOrders = computed(() => {
+                    return orders.value.filter(o => {
+                        const statusMatch = filterStatus.value.includes(o.status || '暫存');
+                        const searchLower = searchQuery.value.toLowerCase();
+                        const searchMatch = !searchQuery.value || 
+                                            (o.customerName && o.customerName.toLowerCase().includes(searchLower)) ||
+                                            (o.area && o.area.toLowerCase().includes(searchLower));
+                        return statusMatch && searchMatch;
+                    }).sort((a,b) => new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0));
+                });
+
+                const groupedOrders = computed(() => {
+                    const groups = {};
+                    const field = groupByField.value;
+                    filteredOrders.value.forEach(order => {
+                        let key = order[field];
+                        if (field === 'status' && !key) key = '暫存';
+                        if (field === 'area' && !key) key = '未分區';
+                        if (field === 'type' && !key) key = '未分類';
+                        if (!groups[key]) groups[key] = [];
+                        groups[key].push(order);
+                    });
+                    const sortedKeys = Object.keys(groups).sort((a,b) => {
+                         if(field === 'status') {
+                             if(a === '停送') return 1;
+                             if(b === '停送') return -1;
+                             return statusOptions.indexOf(a) - statusOptions.indexOf(b);
+                         }
+                         return a.localeCompare(b);
+                    });
+                    const sortedGroups = {};
+                    sortedKeys.forEach(k => sortedGroups[k] = groups[k]);
+                    return sortedGroups;
+                });
+
+                const ganttMonths = computed(() => {
+                    const months = [];
+                    if(!ganttRange.start || !ganttRange.end) return months;
+                    let current = new Date(ganttRange.start + '-01');
+                    const endNode = new Date(ganttRange.end + '-01');
+                    while (current <= endNode) {
+                        months.push(`${current.getFullYear()}-${String(current.getMonth()+1).padStart(2, '0')}`);
+                        current.setMonth(current.getMonth() + 1);
+                    }
+                    return months;
+                });
+
+                const ganttData = computed(() => {
+                    const sortedCustomers = [...savedCustomers.value].sort((a, b) => {
+                        if (a.status === '停送' && b.status !== '停送') return 1;
+                        if (b.status === '停送' && a.status !== '停送') return -1;
+                        return 0;
+                    });
+
+                    return sortedCustomers.map(cust => {
+                        const row = { customer: cust, months: {} };
+                        ganttMonths.value.forEach(m => {
+                            const order = orders.value.find(o =>
+                                o.customerName === cust.name &&
+                                o.dates && Object.keys(o.dates).some(d => d.startsWith(m))
+                            );
+                            row.months[m] = order || null;
+                        });
+                        return row;
+                    });
+                });
+
+                const updateCustomerStatus = async (cust, newStatus) => {
+                    try {
+                        const key = btoa(encodeURIComponent(cust.name)).replace(/[^a-zA-Z0-9]/g, '');
+                        await update(dbRef(db, `customers/${key}`), { status: newStatus });
+                        
+                        const relatedOrders = orders.value.filter(o => o.customerName === cust.name);
+                        for(const order of relatedOrders) {
+                            await update(dbRef(db, `orders/${order.id}`), { status: newStatus, updatedAt: new Date().toISOString() });
+                        }
+                    } catch(e) { console.error("狀態更新失敗", e); }
+                };
+
+                const applyQuickCycle = (daysArray) => {
+                    form.selectedDays = daysArray;
+                    quantityMap.clear(); 
+                    
+                    const [sy, sm] = dateRange.start.split('-').map(Number);
+                    const [ey, em] = dateRange.end.split('-').map(Number);
+                    const start = new Date(sy, sm - 1, 1);
+                    const end = new Date(ey, em, 0);
+                    
+                    let current = new Date(start);
+                    while(current <= end) {
+                        const y = current.getFullYear();
+                        const mStr = String(current.getMonth() + 1).padStart(2, '0');
+                        const dStr = String(current.getDate()).padStart(2, '0');
+                        const dayOfWeek = current.getDay();
+                        
+                        if(form.selectedDays.includes(dayOfWeek)) {
+                            const fDate = `${y}/${mStr}/${dStr}`;
+                            const fDateDash = `${y}-${mStr}-${dStr}`;
+                            if(!form.ignoreHolidays && specialDays.value[fDateDash]) {
+                                // 略過假日
+                            } else {
+                                const targetQty = (isCustomQtyMode.value && customQtyValue.value >= 2) ? customQtyValue.value : 1;
+                                quantityMap.set(fDate, targetQty);
+                            }
+                        }
+                        current.setDate(current.getDate() + 1);
+                    }
+                };
+
+                const generateDates = () => {
+                    if (form.selectedDays && form.selectedDays.length > 0) {
+                        applyQuickCycle(form.selectedDays);
+                    }
+                };
+
+                const createDefaultGanttBill = (cust, monthStr) => {
+                    editMode.value = false;
+                    currentOrderId.value = null;
+                    form.customerName = cust.name;
+                    onNameInput(); 
+                    if(form.status === '停送') form.status = '暫存';
+                    
+                    dateRange.start = monthStr;
+                    dateRange.end = monthStr;
+
+                    if(!form.selectedDays || form.selectedDays.length === 0) form.selectedDays = [1,2,3,4,5];
+                    applyQuickCycle(form.selectedDays);
+                    
+                    isSidebarOpen.value = true;
+                    switchTab('create');
+                };
+
+                const toggleDateQty = (d) => { 
+                    if (isCustomQtyMode.value && customQtyValue.value >= 2) {
+                        let q = quantityMap.get(d.fullDate) || 0;
+                        if (q === customQtyValue.value) q = 0;
+                        else q = customQtyValue.value;
+                        quantityMap.set(d.fullDate, q);
+                    } else {
+                        let q = d.qty; 
+                        if (q === 0) q = 1; else if (q === 1) q = 2; else q = 0; 
+                        quantityMap.set(d.fullDate, q);
+                    }
+                };
+
+                const quickBillMonth = async (monthData) => {
+                    if(!form.customerName) {
+                        showModal('提示', '請先輸入顧客姓名', 'error');
+                        return;
+                    }
+                    const [y, m] = monthData.title.split('-');
+                    const active = monthData.days.filter(d => d.qty > 0);
+                    if(active.length === 0) return;
+                    
+                    const totalBtls = active.reduce((acc, d) => acc + d.qty, 0);
+                    const amount = totalBtls * form.unitPrice;
+                    
+                    const details = active.map(d => `${parseInt(d.dateStr)}${d.qty!==1?'*'+d.qty:''}`).join('、');
+                    const text = `配送帳單 (${monthData.title})\n顧客：${form.customerName}\n\n🔺 ${parseInt(m)}月\n${details}\n------------------\n共：${totalBtls} 瓶\n應收：NT$${amount.toLocaleString()}`;
+                    
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        form.status = '已出帳';
+                        await saveOrder(false); 
+                        showModal('一鍵出帳完成', `已自動切換訂單為「已出帳」！\n\n${parseInt(m)}月帳單已複製至剪貼簿：\n共 ${totalBtls} 瓶，應收 $${amount.toLocaleString()}`);
+                    } catch(err) {
+                        console.error('出帳失敗', err);
+                    }
+                };
+
+                const getSmartColumnWidth = (count) => {
+                    if (count > 16) return 'w-[50rem]';
+                    if (count > 8) return 'w-[33rem]';
+                    return 'w-64';
+                };
+                const getSmartGridCols = (count) => {
+                    if (count > 16) return 'grid-cols-3';
+                    if (count > 8) return 'grid-cols-2';
+                    return 'grid-cols-1';
+                };
+
+                const openHistory = (name) => {
+                    if(!name) return;
+                    historyModal.customerName = name;
+                    historyModal.orders = orders.value.filter(o => o.customerName === name).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    historyModal.selectedIds = [];
+                    historyModal.show = true;
+                };
+                const toggleHistorySelection = (ord) => {
+                    const idx = historyModal.selectedIds.indexOf(ord.id);
+                    if(idx > -1) historyModal.selectedIds.splice(idx, 1);
+                    else historyModal.selectedIds.push(ord.id);
+                };
+
+                const combinedBillText = computed(() => {
+                    if(historyModal.selectedIds.length === 0) return '請勾選左側訂單...';
+                    const selected = historyModal.orders.filter(o => historyModal.selectedIds.includes(o.id));
+                    let totalVal = 0, totalBtls = 0, details = '';
+                    selected.forEach(o => {
+                        totalVal += (parseInt(o.totalAmount) || 0);
+                        totalBtls += (parseInt(o.totalCount) || 0);
+                        details += `• ${formatDateRangeShort(o.dates)}｜${o.totalCount}瓶 $${o.totalAmount}\n`;
+                    });
+                    return `顧客：${historyModal.customerName}\n------------------\n${details}------------------\n共：${totalBtls} 瓶\n應收：NT$${totalVal.toLocaleString()}`;
+                });
+                const copyCombinedBill = () => { navigator.clipboard.writeText(combinedBillText.value).then(() => showModal('已複製', '合併帳單內容已複製')); };
+
+                const toSafeKey = (d) => d.replace(/\//g, '-');
+                
+                const monthsGrid = computed(() => {
+                    if (!dateRange.start || !dateRange.end) return [];
+                    const [sy, sm] = dateRange.start.split('-').map(Number);
+                    const [ey, em] = dateRange.end.split('-').map(Number);
+                    const start = new Date(sy, sm - 1, 1);
+                    const end = new Date(ey, em, 0);
+                    const activeDays = new Set(form.selectedDays);
+                    const grids = [];
+                    let current = new Date(start);
+                    while (current <= end) {
+                        const y = current.getFullYear();
+                        const m = current.getMonth();
+                        const mStr = (m + 1).toString().padStart(2, '0');
+                        const monthKey = `${y}-${mStr}`;
+                        const daysInMonth = new Date(y, m + 1, 0).getDate();
+                        const firstDayOfWeek = (new Date(y, m, 1).getDay() - 1 + 7) % 7;
+                        const days = [];
+                        let totalQty = 0;
+                        for (let d = 1; d <= daysInMonth; d++) {
+                            const dStr = d.toString().padStart(2, '0');
+                            const fDate = `${y}/${mStr}/${dStr}`;
+                            const fDateDash = `${y}-${mStr}-${dStr}`; 
+                            const dayOfWeek = new Date(y, m, d).getDay();
+                            const isValid = activeDays.has(dayOfWeek);
+                            const specialReason = specialDays.value[fDateDash];
+                            const isSpecial = !!specialReason;
+                            let qty = quantityMap.get(fDate) || 0;
+                            if (isValid) totalQty += qty;
+                            days.push({ fullDate: fDate, dateStr: dStr, dayStr: dayOfWeek, qty: qty, isValid: isValid, isSpecial: isSpecial, specialReason: specialReason });
+                        }
+                        const amount = Math.floor(totalQty * form.unitPrice);
+                        grids.push({ title: monthKey, days: days, startDay: firstDayOfWeek, total: totalQty, amount: amount.toLocaleString() });
+                        current = new Date(y, m + 1, 1);
+                    }
+                    return grids;
+                });
+                
+                const toggleMonth = (days) => {
+                    const validDays = days.filter(d => d.isValid);
+                    if(validDays.length === 0) return;
+                    const targets = form.ignoreHolidays ? validDays : validDays.filter(d => !d.isSpecial);
+                    const hasQty = targets.some(d => quantityMap.get(d.fullDate) > 0);
+                    const targetQty = (isCustomQtyMode.value && customQtyValue.value >= 2) ? customQtyValue.value : 1;
+                    targets.forEach(d => quantityMap.set(d.fullDate, hasQty ? 0 : targetQty));
+                };
+
+                const totalCount = computed(() => {
+                    let sum = 0;
+                    for (const q of quantityMap.values()) sum += q;
+                    return sum;
+                });
+                const totalAmount = computed(() => Math.floor(totalCount.value * form.unitPrice));
+
+                const generatedBillText = computed(() => {
+                    const active = [];
+                    const sortedKeys = Array.from(quantityMap.keys()).sort();
+                    for(const k of sortedKeys) {
+                        if(quantityMap.get(k) > 0) {
+                            const [y,m,d] = k.split('/');
+                            active.push({ fullDate: k, dateStr: d, qty: quantityMap.get(k) });
+                        }
+                    }
+                    if (active.length === 0) return '尚未選擇日期';
+                    const header = active[0].fullDate.substring(0, 7).replace('/', '-');
+                    const byMonth = {};
+                    active.forEach(d => {
+                        const k = d.fullDate.substring(0, 7);
+                        if (!byMonth[k]) byMonth[k] = [];
+                        byMonth[k].push(d);
+                    });
+
+                    let details = '';
+                    if (copyMode.value === 'A') {
+                        for(const [mKey, dates] of Object.entries(byMonth)) {
+                            const [y, m] = mKey.split('/');
+                            details += `\n🔺 ${parseInt(m)}月\n`;
+                            details += dates.map(d => `${parseInt(d.dateStr)}${d.qty!==1?'*'+d.qty:''}`).join('、') + '\n';
+                        }
+                    } else {
+                        details += '\n配送統計：\n';
+                        for(const [mKey, dates] of Object.entries(byMonth)) {
+                            const [y, m] = mKey.split('/');
+                            const sum = dates.reduce((a,b)=>a+b.qty,0);
+                            details += `${parseInt(m)}月: ${sum}瓶\n`;
+                        }
+                    }
+                    return `配送帳單 (${header})\n顧客：${form.customerName}\n${details}------------------\n總計：${totalCount.value} 瓶\n應收：NT$${totalAmount.value}`;
+                });
+                const copyBill = () => { navigator.clipboard.writeText(generatedBillText.value).then(() => showModal('複製成功', '明細已複製')); };
+
+                const saveOrder = async (switchToList = true) => {
+                    if (!form.customerName) { showModal('錯誤', '請輸入姓名', 'error'); return; }
+                    isSaving.value = true;
+                    try {
+                        const datesObj = {};
+                        for (const [k, v] of quantityMap.entries()) { if(v > 0) datesObj[toSafeKey(k)] = v; }
+                        const payload = {
+                            customerName: form.customerName, area: form.area || '未分區', unitPrice: form.unitPrice || 30,
+                            status: form.status || '暫存', type: form.type || '晨間', selectedDays: form.selectedDays || [],
+                            totalAmount: totalAmount.value, totalCount: totalCount.value, dates: datesObj, 
+                            updatedAt: new Date().toISOString(), ignoreHolidays: form.ignoreHolidays || false
+                        };
+                        if (editMode.value && currentOrderId.value) await update(dbRef(db, `orders/${currentOrderId.value}`), payload);
+                        else { 
+                            payload.createdAt = new Date().toISOString(); 
+                            const res = await push(dbRef(db, 'orders'), payload); 
+                            currentOrderId.value = res.key;
+                            editMode.value = true;
+                        }
+                        
+                        const key = btoa(encodeURIComponent(form.customerName)).replace(/[^a-zA-Z0-9]/g, '');
+                        await update(dbRef(db, `customers/${key}`), { 
+                            name: form.customerName, area: form.area, unitPrice: form.unitPrice,
+                            type: form.type, status: form.status, ignoreHolidays: form.ignoreHolidays 
+                        });
+                        
+                        if(switchToList) {
+                            showModal('儲存成功', '訂單已更新');
+                            switchTab('list');
+                        }
+                    } catch (e) { showModal('儲存失敗', e.message, 'error'); } 
+                    finally { isSaving.value = false; }
+                };
+
+                const quickUpdateStatus = async (order, newStatus) => {
+                    if (order.status === newStatus) return;
+                    try {
+                        await update(dbRef(db, `orders/${order.id}`), { status: newStatus, updatedAt: new Date().toISOString() });
+                    } catch(e) { console.error(e); }
+                };
+
+                const editOrder = (o) => {
+                    editMode.value = true; currentOrderId.value = o.id;
+                    form.customerName = o.customerName || ''; form.area = o.area || ''; form.unitPrice = o.unitPrice || 30;
+                    form.status = o.status || '暫存'; form.type = o.type || '晨間'; form.selectedDays = o.selectedDays || [1,2,3,4,5];
+                    form.ignoreHolidays = o.ignoreHolidays || false;
+                    quantityMap.clear();
+                    if(o.dates) { for(const [k, v] of Object.entries(o.dates)) { quantityMap.set(k.replace(/-/g, '/'), v); } }
+                    isSidebarOpen.value = true; 
+                    switchTab('create');
+                };
+
+                const onNameInput = () => { 
+                    const f = savedCustomers.value.find(c => c.name === form.customerName); 
+                    if (f) { 
+                        form.area = f.area || ''; form.unitPrice = f.unitPrice || 30;
+                        if(f.type) form.type=f.type; if(f.status) form.status=f.status; 
+                        form.ignoreHolidays = f.ignoreHolidays || false;
+                    } 
+                };
+
+                const switchTab = (t) => {
+                    if (t === 'create' && !editMode.value) { 
+                        form.customerName=''; form.area=''; form.unitPrice=30; 
+                        form.status='暫存'; form.type='晨間'; form.selectedDays=[1,2,3,4,5]; form.ignoreHolidays=false;
+                        quantityMap.clear();
+                        isSidebarOpen.value = true;
+                    } 
+                    else if (t === 'list' || t === 'gantt') { editMode.value = false; currentOrderId.value = null; }
+                    currentTab.value = t;
+                };
+                const switchToCreate = () => { editMode.value = false; switchTab('create'); };
+
+                const addHoliday = () => {
+                    if(newHoliday.date && newHoliday.reason) {
+                        update(dbRef(db, 'settings/holidays'), { [newHoliday.date]: newHoliday.reason });
+                        newHoliday.date = ''; newHoliday.reason = '';
+                    }
+                };
+                const removeHoliday = (date) => { if(confirm('移除此假日？')) remove(dbRef(db, `settings/holidays/${date}`)); };
+                
+                const formatDateRangeShort = (dates) => {
+                    if (!dates) return '';
+                    const keys = Object.keys(dates).sort();
+                    if (keys.length === 0) return '';
+                    const start = keys[0].substring(5); 
+                    const end = keys[keys.length - 1].substring(5);
+                    return start === end ? start : `${start}~${end}`;
+                };
+
+                const uniqueAreas = computed(() => [...new Set(savedCustomers.value.map(c => c.area).filter(Boolean))]);
+                const getStatusColorBg = (s) => { 
+                    switch(s){ case '已通知':return 'bg-amber-400'; case '已出帳':return 'bg-blue-400'; case '已收款':return 'bg-emerald-400'; case '停送': return 'bg-stone-700'; case '開學送': return 'bg-teal-400'; case '天天送': return 'bg-indigo-400'; default:return 'bg-stone-300'; }
+                };
+                const getStatusBtnClass = (s) => {
+                    switch(s){ case '已通知':return 'status-btn-notified'; case '已出帳':return 'status-btn-billed'; case '已收款':return 'status-btn-paid'; case '停送': return 'status-btn-stopped'; case '開學送': return 'status-btn-school'; case '天天送': return 'status-btn-everyday'; default:return 'status-btn-save'; }
+                };
+                const getTypeDotClass = (t) => {
+                    switch(t){ case '家庭號':return 'dot-family'; case '團購':return 'dot-group'; default:return 'dot-morning'; }
+                };
+                const getGroupColor = (k) => {
+                    if(k==='已收款') return 'bg-emerald-500'; if(k==='已出帳') return 'bg-blue-500'; if(k==='已通知') return 'bg-amber-500'; if(k==='停送') return 'bg-stone-700'; if(k==='開學送') return 'bg-teal-400'; if(k==='天天送') return 'bg-indigo-400'; if(k==='暫存') return 'bg-stone-400';
+                    return 'bg-stone-400';
+                };
+
+                return {
+                    currentTab, loading, isSaving, editMode, switchTab, switchToCreate,
+                    form, savedCustomers, uniqueAreas, onNameInput, dayMap,
+                    monthsGrid, toggleDateQty, modal, showModal, closeModal,
+                    totalCount, totalAmount, generatedBillText, copyBill, 
+                    settingsModal, newHoliday, addHoliday, removeHoliday, specialDays,
+                    saveOrder, editOrder, formatDateRangeShort,
+                    getStatusColorBg, getTypeDotClass, reloadPage, copyMode,
+                    exportData, handleImport, triggerImport, fileInput,
+                    statusOptions, filterStatus, filteredOrders, dateRange,
+                    groupByField, groupModes, groupedOrders, getGroupColor,
+                    historyModal, openHistory, toggleHistorySelection, combinedBillText, copyCombinedBill,
+                    toggleMonth, applyQuickCycle, quickBillMonth, updateCustomerStatus,
+                    searchQuery, quickUpdateStatus, isSidebarOpen,
+                    getSmartColumnWidth, getSmartGridCols, getStatusBtnClass,
+                    ganttMonths, ganttData, createDefaultGanttBill,
+                    showGanttSetting, ganttRange, printCalendar, deleteOrder,
+                    isCustomQtyMode, customQtyValue, generateDates
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
